@@ -483,30 +483,24 @@
         let isAdmin = false;
         let menuItems = []; 
         let cart = {}; 
-        let pendingOrders = []; 
         
-        // --- الرابط الخاص بـ Google Apps Script الذي أرسلته ---
+        // --- الرابط الخاص بـ Google Apps Script ---
         const API_URL = "https://script.google.com/macros/s/AKfycbzNWehTim0jJzhK1L9QSf8xOctkpCk7mB8X5FK4CnyPOUwhAthbD2ynFlPkXuiXZ6Hv/exec";
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // دالة مركزية للاتصال بـ GAS
+        // دالة مركزية للاتصال بـ GAS (POST)
         async function fetchAPI(action, payload = {}) {
-            payload.action = action; // تحديد نوع الطلب للـ GAS
+            payload.action = action;
             try {
-                const response = await fetch(API_URL, {
+                await fetch(API_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // بما أننا نتعامل مع GAS من مصدر خارجي نحتاج إرسال البيانات هكذا
+                    mode: 'no-cors', 
                     cache: 'no-cache',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                
-                // تنبيه: no-cors يمنع قراءة الرد المباشر، 
-                // لذا في هذا السياق سنعتمد على استدعاء GET لجلب التحديثات
                 return true; 
             } catch (error) {
                 console.error("Error:", error);
@@ -514,32 +508,29 @@
             }
         }
         
-        // دالة لجلب البيانات من السيرفر
+        // جلب المنيو (GET)
         async function fetchData() {
             try {
-                const response = await fetch(API_URL + "?action=getMenuData");
+                const response = await fetch(`${API_URL}?action=getMenuData&t=${new Date().getTime()}`);
                 const data = await response.json();
                 menuItems = data.items || [];
                 renderMenu();
             } catch (error) {
                 console.error("Error fetching data:", error);
-                document.getElementById('menuContainer').innerHTML = '<div style="color:red; text-align:center;">حدث خطأ في جلب البيانات من السيرفر</div>';
+                document.getElementById('menuContainer').innerHTML = '<div style="color:red; text-align:center;">حدث خطأ في الاتصال بالسيرفر</div>';
             }
         }
 
-        window.onload = function() {
-            fetchData();
-        };
+        window.onload = fetchData;
 
         // ================= 1. عرض الأكلات والبحث =================
         function renderMenu() {
             const container = document.getElementById('menuContainer');
             const searchQ = document.getElementById('searchInput').value.toLowerCase();
             const filter = document.getElementById('filterSelect').value;
-            
             container.innerHTML = '';
 
-            menuItems.forEach((item, index) => {
+            menuItems.forEach((item) => {
                 if(filter !== 'all' && item.type !== filter) return;
                 if(searchQ && !item.name.toLowerCase().includes(searchQ) && !item.id.toString().includes(searchQ)) return;
 
@@ -547,11 +538,9 @@
                 let finalPrice = isDiscounted ? item.price - (item.price * (item.discount / 100)) : item.price;
                 let avgStars = item.ratingCount > 0 ? (item.totalStars / item.ratingCount).toFixed(1) : 0;
                 let starsDisplay = avgStars > 0 ? `★ ${avgStars} (${item.ratingCount})` : '☆ قيّم الآن';
-
-                // تم إضافة style لجعل خيارات الأدمن تظهر إذا كان الأدمن مسجلاً الدخول
                 let adminDisplay = isAdmin ? 'display:flex;' : '';
 
-                let cardHTML = `
+                container.innerHTML += `
                     <div class="item-card glass-panel" data-id="${item.id}">
                         ${isDiscounted ? `<div class="discount-badge">خصم ${item.discount}%</div>` : ''}
                         <div class="admin-options" style="${adminDisplay}" onclick="openAdminOptions('${item.id}', event)">⋮</div>
@@ -560,7 +549,6 @@
                             <span class="item-id">المعرف: #${item.id}</span>
                             <h3 class="item-name">${item.name}</h3>
                             <div class="rating-area" onclick="openRating('${item.id}', '${item.name}')">${starsDisplay}</div>
-                            
                             <div class="price-area">
                                 <div class="price-group">
                                     ${isDiscounted ? `<span class="price-old">${item.price} د.ع</span>` : ''}
@@ -569,25 +557,18 @@
                                 <button class="add-btn" onclick="addToCart('${item.id}')">+</button>
                             </div>
                         </div>
-                    </div>
-                `;
-                container.innerHTML += cardHTML;
+                    </div>`;
             });
-
-            if(container.innerHTML === '') container.innerHTML = '<div style="color:var(--gold); grid-column:1/-1; text-align:center;">لا توجد نتائج!</div>';
         }
 
-        // ================= 2. نظام السلة والطلبات للزبون =================
+        // ================= 2. نظام السلة والطلبات =================
         function addToCart(id) {
-            if(cart[id]) cart[id]++;
-            else cart[id] = 1;
+            cart[id] = (cart[id] || 0) + 1;
             updateCartUI();
         }
 
         function updateCartUI() {
-            let totalItems = 0;
-            let totalPrice = 0;
-            
+            let totalItems = 0, totalPrice = 0;
             for(let id in cart) {
                 let item = menuItems.find(i => i.id == id);
                 if(item) {
@@ -596,195 +577,121 @@
                     totalPrice += (price * cart[id]);
                 }
             }
-
-            const bar = document.getElementById('cartBar');
-            if(totalItems > 0) {
-                bar.style.display = 'flex';
-                document.getElementById('cartTotal').innerText = `الطلبات: ${totalItems} | الإجمالي: ${totalPrice} د.ع`;
-            } else {
-                bar.style.display = 'none';
-            }
+            document.getElementById('cartBar').style.display = totalItems > 0 ? 'flex' : 'none';
+            document.getElementById('cartTotal').innerText = `الطلبات: ${totalItems} | الإجمالي: ${totalPrice} د.ع`;
         }
 
         async function submitOrder() {
             let table = document.getElementById('tableNumber').value;
-            if(!table || table < 1 || table > 30) {
-                alert("يرجى إدخال رقم طاولة صحيح من 1 إلى 30");
-                return;
-            }
-            
+            if(!table || table < 1 || table > 30) return alert("رقم طاولة غير صحيح");
             document.getElementById('btnConfirmOrder').innerText = "جاري الإرسال...";
-            
-            let orderData = { table: table, cart: cart };
-            await fetchAPI("placeOrder", orderData);
-            
-            document.getElementById('checkoutMsg').innerText = "تم استلام طلبك بنجاح!";
-            setTimeout(() => { 
-                cart = {}; 
-                updateCartUI(); 
-                document.getElementById('btnConfirmOrder').innerText = "تأكيد وإرسال الطلب";
-                document.getElementById('checkoutMsg').innerText = "";
-                closeModal('checkoutModal'); 
-            }, 2000);
+            await fetchAPI("placeOrder", { table: table, cart: cart });
+            document.getElementById('checkoutMsg').innerText = "تم استلام طلبك!";
+            setTimeout(() => { cart = {}; updateCartUI(); closeModal('checkoutModal'); document.getElementById('btnConfirmOrder').innerText = "تأكيد الطلب"; }, 2000);
         }
 
         // ================= 3. نظام التقييم =================
         function openRating(id, name) {
             document.getElementById('rateItemId').value = id;
             document.getElementById('rateItemName').innerText = name;
-            document.getElementById('starContainer').innerHTML = '<span onclick="submitRate(1)">☆</span><span onclick="submitRate(2)">☆</span><span onclick="submitRate(3)">☆</span><span onclick="submitRate(4)">☆</span><span onclick="submitRate(5)">☆</span>';
             openModal('ratingModal');
         }
 
         async function submitRate(stars) {
             let id = document.getElementById('rateItemId').value;
-            document.getElementById('starContainer').innerHTML = `<span style="color:var(--gold)">تم التقييم بـ ${stars} نجوم! شكراً لك</span>`;
+            document.getElementById('starContainer').innerHTML = "شكراً لتقييمك!";
             await fetchAPI("rateItem", { id: id, stars: stars });
-            setTimeout(() => {
-                closeModal('ratingModal');
-                fetchData(); // تحديث البيانات لإظهار التقييم الجديد
-            }, 1500);
+            setTimeout(() => { closeModal('ratingModal'); fetchData(); }, 1500);
         }
 
-                // ================= 4. نظام الأدمن =================
+        // ================= 4. نظام الأدمن =================
         async function loginAdmin() {
             let u = document.getElementById('adminUser').value;
             let p = document.getElementById('adminPass').value;
+            if (u !== "admin") return document.getElementById('loginMsg').innerText = "اليوزر خطأ";
             
-            // تثبيت اليوزر نيم برمجياً
-            const FIXED_ADMIN_USER = "admin"; 
-
-            if (u !== FIXED_ADMIN_USER) {
-                document.getElementById('loginMsg').innerText = "اسم المستخدم غير صحيح";
-                return;
-            }
-
-            document.getElementById('loginMsg').innerText = "جاري التحقق من كلمة المرور...";
-            
+            document.getElementById('loginMsg').innerText = "جاري التحقق...";
             try {
-                // نرسل كلمة المرور فقط للتحقق منها من السيرفر (GAS)
-                const response = await fetch(API_URL + `?action=verifyAdmin&p=${p}`);
-                const res = await response.json();
-                
-                if(res.success) {
+                const res = await fetch(`${API_URL}?action=verifyAdmin&p=${encodeURIComponent(p)}&t=${new Date().getTime()}`);
+                const data = await res.json();
+                if(data.success) {
                     isAdmin = true;
                     closeModal('loginModal');
                     document.getElementById('adminDock').style.display = 'flex';
-                    renderMenu(); 
+                    renderMenu();
                 } else {
-                    document.getElementById('loginMsg').innerText = res.msg || "كلمة المرور خاطئة";
+                    document.getElementById('loginMsg').innerText = "الباسوورد خطأ";
                 }
             } catch (e) {
-                document.getElementById('loginMsg').innerText = "حدث خطأ في الاتصال بالسيرفر";
-                console.error(e);
+                document.getElementById('loginMsg').innerText = "فشل الاتصال";
             }
         }
-
 
         function addNewItem() {
             let name = document.getElementById('addName').value;
             let type = document.getElementById('addType').value;
             let price = document.getElementById('addPrice').value;
-            let fileInput = document.getElementById('addImage');
-            
-            if(!name || !price || fileInput.files.length === 0) {
-                document.getElementById('addMsg').innerText = "يرجى تعبئة جميع الحقول وإرفاق صورة!";
-                return;
-            }
+            let file = document.getElementById('addImage').files[0];
+            if(!name || !price || !file) return alert("أكمل البيانات");
 
             document.getElementById('btnPublish').innerText = "جاري الرفع...";
-            
-            let file = fileInput.files[0];
             let reader = new FileReader();
             reader.onload = async function(e) {
-                let base64 = e.target.result;
-                let itemData = { name: name, type: type, price: price, base64: base64, filename: file.name };
-                
-                await fetchAPI("saveNewItem", itemData);
-                
-                document.getElementById('addMsg').innerText = "تم النشر بنجاح!";
-                setTimeout(() => { 
-                    closeModal('addModal'); 
-                    document.getElementById('btnPublish').innerText = "نشر بالموقع";
-                    document.getElementById('addMsg').innerText = "";
-                    fetchData(); // جلب البيانات الجديدة
-                }, 1500);
+                await fetchAPI("saveNewItem", { name: name, type: type, price: price, base64: e.target.result, filename: file.name });
+                document.getElementById('addMsg').innerText = "تمت الإضافة!";
+                setTimeout(() => { closeModal('addModal'); fetchData(); }, 1500);
             };
             reader.readAsDataURL(file);
         }
 
         function openAdminOptions(id, event) {
-            event.stopPropagation(); 
+            event.stopPropagation();
             document.getElementById('optItemId').value = id;
             openModal('itemOptionsModal');
         }
 
         async function deleteItem() {
-            let id = document.getElementById('optItemId').value;
-            if(confirm("هل أنت متأكد من حذف هذه الأكلة نهائياً؟")) {
-                closeModal('itemOptionsModal');
-                await fetchAPI("deleteItem", { id: id });
-                fetchData();
+            if(confirm("حذف نهائي؟")) {
+                await fetchAPI("deleteItem", { id: document.getElementById('optItemId').value });
+                closeModal('itemOptionsModal'); fetchData();
             }
         }
 
         function openDiscountMenu() { closeModal('itemOptionsModal'); openModal('discountModal'); }
-        
-        document.getElementById('discDuration').addEventListener('change', function() {
-            document.getElementById('discTimeValue').style.display = this.value === 'permanent' ? 'none' : 'block';
-        });
 
         async function applyDiscount() {
             let id = document.getElementById('optItemId').value;
             let percent = document.getElementById('discPercent').value;
-            let type = document.getElementById('discDuration').value;
-            let time = document.getElementById('discTimeValue').value;
-            
-            closeModal('discountModal');
-            await fetchAPI("setDiscount", { id: id, percent: percent, type: type, time: time });
-            fetchData();
+            await fetchAPI("setDiscount", { id: id, percent: percent });
+            closeModal('discountModal'); fetchData();
         }
 
         async function removeDiscount() {
-            let id = document.getElementById('optItemId').value;
-            closeModal('itemOptionsModal');
-            await fetchAPI("removeDiscount", { id: id });
-            fetchData();
+            await fetchAPI("removeDiscount", { id: document.getElementById('optItemId').value });
+            closeModal('itemOptionsModal'); fetchData();
         }
 
         async function renderOrders(status) {
-            document.getElementById('ordersList').innerHTML = "<p style='text-align:center;'>جاري جلب الطلبات...</p>";
-            try {
-                const response = await fetch(API_URL + "?action=getOrders");
-                const orders = await response.json();
-                
-                let html = '';
-                if(orders && orders.length > 0) {
-                    orders.forEach(o => {
-                        if(o.status === status) {
-                            html += `
-                            <div class="order-card">
-                                <div><strong>طاولة:</strong> ${o.table}</div>
-                                <div><strong>الوقت:</strong> ${o.time}</div>
-                                <div><strong>المبلغ:</strong> ${o.total} د.ع</div>
-                                ${status === 'pending' ? `
-                                <div class="order-actions">
-                                    <button class="btn-green" onclick="updateOrderStatus('${o.orderId}', 'completed')">✔️ موافقة (مكتمل)</button>
-                                    <button class="btn-red" onclick="updateOrderStatus('${o.orderId}', 'rejected')">❌ رفض (حذف)</button>
-                                </div>` : '<div style="color:var(--gold); margin-top:5px;">✅ طلب مكتمل</div>'}
-                            </div>`;
-                        }
-                    });
+            document.getElementById('ordersList').innerHTML = "جاري الجلب...";
+            const res = await fetch(`${API_URL}?action=getOrders&t=${new Date().getTime()}`);
+            const orders = await res.json();
+            let html = '';
+            orders.forEach(o => {
+                if(o.status === status) {
+                    html += `<div class="order-card">
+                        <div>طاولة: ${o.table} | مبلغ: ${o.total}</div>
+                        <div class="order-actions">
+                            ${status === 'pending' ? `<button class="btn-green" onclick="updateOrderStatus('${o.orderId}', 'completed')">تم</button>` : 'مكتمل'}
+                        </div>
+                    </div>`;
                 }
-                document.getElementById('ordersList').innerHTML = html || "<p style='text-align:center;'>لا توجد طلبات.</p>";
-            } catch (error) {
-                document.getElementById('ordersList').innerHTML = "<p style='text-align:center; color:red;'>خطأ في جلب الطلبات</p>";
-            }
+            });
+            document.getElementById('ordersList').innerHTML = html || "لا يوجد";
         }
 
-        async function updateOrderStatus(orderId, action) {
-            await fetchAPI("updateOrder", { orderId: orderId, action: action });
-            renderOrders(action === 'completed' ? 'pending' : 'pending'); // تحديث القائمة
+        async function updateOrderStatus(id, action) {
+            await fetchAPI("updateOrder", { orderId: id, action: action });
+            renderOrders('pending');
         }
     </script>
 </body>
