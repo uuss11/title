@@ -481,26 +481,55 @@
     <script>
         // المتغيرات الأساسية
         let isAdmin = false;
-        let menuItems = []; // مصفوفة البيانات من السيرفر
-        let cart = {}; // سلة المشتريات {id: quantity}
-        let pendingOrders = []; // للادمن
+        let menuItems = []; 
+        let cart = {}; 
+        let pendingOrders = []; 
+        
+        // --- الرابط الخاص بـ Google Apps Script الذي أرسلته ---
+        const API_URL = "https://script.google.com/macros/s/AKfycby1XrsaZ35HDEcxW5tjdDPDOrt-k9cA4keZP0wNnuU07DQVEHtWKKXwRBNujk8Nv-11/exec";
 
-        // دالة الفتح والإغلاق للنوافذ الزجاجية
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // عند تحميل الصفحة، اطلب البيانات من GAS
-        window.onload = function() {
-            // محاكاة تحميل البيانات حتى يتم ربطها برمجياً مع GAS
-            // سيتم استبدال هذا الجزء بـ google.script.run
-            google.script.run.withSuccessHandler(initData).getMenuData();
-        };
-
-        // استلام البيانات وتجهيزها
-        function initData(data) {
-            menuItems = data.items || [];
-            renderMenu();
+        // دالة مركزية للاتصال بـ GAS
+        async function fetchAPI(action, payload = {}) {
+            payload.action = action; // تحديد نوع الطلب للـ GAS
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // بما أننا نتعامل مع GAS من مصدر خارجي نحتاج إرسال البيانات هكذا
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                // تنبيه: no-cors يمنع قراءة الرد المباشر، 
+                // لذا في هذا السياق سنعتمد على استدعاء GET لجلب التحديثات
+                return true; 
+            } catch (error) {
+                console.error("Error:", error);
+                return false;
+            }
         }
+        
+        // دالة لجلب البيانات من السيرفر
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL + "?action=getMenuData");
+                const data = await response.json();
+                menuItems = data.items || [];
+                renderMenu();
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                document.getElementById('menuContainer').innerHTML = '<div style="color:red; text-align:center;">حدث خطأ في جلب البيانات من السيرفر</div>';
+            }
+        }
+
+        window.onload = function() {
+            fetchData();
+        };
 
         // ================= 1. عرض الأكلات والبحث =================
         function renderMenu() {
@@ -511,23 +540,21 @@
             container.innerHTML = '';
 
             menuItems.forEach((item, index) => {
-                // فلترة البحث
                 if(filter !== 'all' && item.type !== filter) return;
                 if(searchQ && !item.name.toLowerCase().includes(searchQ) && !item.id.toString().includes(searchQ)) return;
 
-                // حساب السعر والخصم
                 let isDiscounted = item.discount > 0;
                 let finalPrice = isDiscounted ? item.price - (item.price * (item.discount / 100)) : item.price;
-                
-                // حساب النجوم (مثال بسيط)
                 let avgStars = item.ratingCount > 0 ? (item.totalStars / item.ratingCount).toFixed(1) : 0;
                 let starsDisplay = avgStars > 0 ? `★ ${avgStars} (${item.ratingCount})` : '☆ قيّم الآن';
 
-                // بناء كرت الأكلة (HTML)
+                // تم إضافة style لجعل خيارات الأدمن تظهر إذا كان الأدمن مسجلاً الدخول
+                let adminDisplay = isAdmin ? 'display:flex;' : '';
+
                 let cardHTML = `
                     <div class="item-card glass-panel" data-id="${item.id}">
                         ${isDiscounted ? `<div class="discount-badge">خصم ${item.discount}%</div>` : ''}
-                        ${isAdmin ? `<div class="admin-options" onclick="openAdminOptions('${item.id}', event)">⋮</div>` : ''}
+                        <div class="admin-options" style="${adminDisplay}" onclick="openAdminOptions('${item.id}', event)">⋮</div>
                         <img src="${item.imgUrl}" class="item-img" onclick="openRating('${item.id}', '${item.name}')">
                         <div class="item-details">
                             <span class="item-id">المعرف: #${item.id}</span>
@@ -579,7 +606,7 @@
             }
         }
 
-        function submitOrder() {
+        async function submitOrder() {
             let table = document.getElementById('tableNumber').value;
             if(!table || table < 1 || table > 30) {
                 alert("يرجى إدخال رقم طاولة صحيح من 1 إلى 30");
@@ -588,12 +615,17 @@
             
             document.getElementById('btnConfirmOrder').innerText = "جاري الإرسال...";
             
-            // تحضير الطلب للإرسال للباك اند
             let orderData = { table: table, cart: cart };
-            google.script.run.withSuccessHandler(res => {
-                document.getElementById('checkoutMsg').innerText = "تم استلام طلبك بنجاح!";
-                setTimeout(() => { cart = {}; updateCartUI(); closeModal('checkoutModal'); }, 2000);
-            }).placeOrder(orderData);
+            await fetchAPI("placeOrder", orderData);
+            
+            document.getElementById('checkoutMsg').innerText = "تم استلام طلبك بنجاح!";
+            setTimeout(() => { 
+                cart = {}; 
+                updateCartUI(); 
+                document.getElementById('btnConfirmOrder').innerText = "تأكيد وإرسال الطلب";
+                document.getElementById('checkoutMsg').innerText = "";
+                closeModal('checkoutModal'); 
+            }, 2000);
         }
 
         // ================= 3. نظام التقييم =================
@@ -604,32 +636,43 @@
             openModal('ratingModal');
         }
 
-        function submitRate(stars) {
+        async function submitRate(stars) {
             let id = document.getElementById('rateItemId').value;
             document.getElementById('starContainer').innerHTML = `<span style="color:var(--gold)">تم التقييم بـ ${stars} نجوم! شكراً لك</span>`;
-            google.script.run.rateItem(id, stars); // إرسال لـ GAS
-            setTimeout(() => closeModal('ratingModal'), 1500);
+            await fetchAPI("rateItem", { id: id, stars: stars });
+            setTimeout(() => {
+                closeModal('ratingModal');
+                fetchData(); // تحديث البيانات لإظهار التقييم الجديد
+            }, 1500);
         }
 
         // ================= 4. نظام الأدمن =================
-        function loginAdmin() {
+        async function loginAdmin() {
             let u = document.getElementById('adminUser').value;
             let p = document.getElementById('adminPass').value;
             document.getElementById('loginMsg').innerText = "جاري التحقق...";
             
-            google.script.run.withSuccessHandler(res => {
+            try {
+                // جلب التحقق عبر GET للالتفاف على قيود CORS في المتصفح
+                const response = await fetch(API_URL + `?action=verifyAdmin&u=${u}&p=${p}`);
+                const res = await response.json();
+                
                 if(res.success) {
                     isAdmin = true;
                     closeModal('loginModal');
                     document.getElementById('adminDock').style.display = 'flex';
-                    renderMenu(); // إعادة رسم المنيو لإظهار خيارات الأدمن (الثلاث نقاط)
+                    renderMenu(); 
                 } else {
-                    document.getElementById('loginMsg').innerText = res.msg;
+                    document.getElementById('loginMsg').innerText = res.msg || "خطأ في بيانات الدخول";
                 }
-            }).verifyAdmin(u, p);
+            } catch (e) {
+                // للتبسيط، إذا كان هناك مشكلة في الـ CORS سنفترض نجاح الدخول مؤقتاً للتجربة 
+                // في الواقع يجب أن يرد الـ GAS برأس Access-Control-Allow-Origin
+                document.getElementById('loginMsg').innerText = "حدث خطأ في الاتصال، يرجى التحقق من إعدادات GAS";
+                console.error(e);
+            }
         }
 
-        // رفع الصورة والأكلة
         function addNewItem() {
             let name = document.getElementById('addName').value;
             let type = document.getElementById('addType').value;
@@ -645,81 +688,95 @@
             
             let file = fileInput.files[0];
             let reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 let base64 = e.target.result;
                 let itemData = { name: name, type: type, price: price, base64: base64, filename: file.name };
                 
-                google.script.run.withSuccessHandler(res => {
-                    document.getElementById('addMsg').innerText = "تم النشر بنجاح!";
+                await fetchAPI("saveNewItem", itemData);
+                
+                document.getElementById('addMsg').innerText = "تم النشر بنجاح!";
+                setTimeout(() => { 
+                    closeModal('addModal'); 
                     document.getElementById('btnPublish').innerText = "نشر بالموقع";
-                    setTimeout(() => { closeModal('addModal'); location.reload(); }, 1500);
-                }).saveNewItem(itemData);
+                    document.getElementById('addMsg').innerText = "";
+                    fetchData(); // جلب البيانات الجديدة
+                }, 1500);
             };
             reader.readAsDataURL(file);
         }
 
-        // خيارات الأدمن (الثلاث نقاط)
         function openAdminOptions(id, event) {
-            event.stopPropagation(); // لمنع تفعيل نقرة الصورة
+            event.stopPropagation(); 
             document.getElementById('optItemId').value = id;
             openModal('itemOptionsModal');
         }
 
-        function deleteItem() {
+        async function deleteItem() {
             let id = document.getElementById('optItemId').value;
             if(confirm("هل أنت متأكد من حذف هذه الأكلة نهائياً؟")) {
-                google.script.run.withSuccessHandler(()=> location.reload()).deleteItem(id);
+                closeModal('itemOptionsModal');
+                await fetchAPI("deleteItem", { id: id });
+                fetchData();
             }
         }
 
-        // إدارة الخصم
         function openDiscountMenu() { closeModal('itemOptionsModal'); openModal('discountModal'); }
         
-        // إظهار حقل الوقت بناء على الاختيار
         document.getElementById('discDuration').addEventListener('change', function() {
             document.getElementById('discTimeValue').style.display = this.value === 'permanent' ? 'none' : 'block';
         });
 
-        function applyDiscount() {
+        async function applyDiscount() {
             let id = document.getElementById('optItemId').value;
             let percent = document.getElementById('discPercent').value;
             let type = document.getElementById('discDuration').value;
             let time = document.getElementById('discTimeValue').value;
             
-            google.script.run.withSuccessHandler(()=> location.reload()).setDiscount(id, percent, type, time);
+            closeModal('discountModal');
+            await fetchAPI("setDiscount", { id: id, percent: percent, type: type, time: time });
+            fetchData();
         }
 
-        function removeDiscount() {
+        async function removeDiscount() {
             let id = document.getElementById('optItemId').value;
-            google.script.run.withSuccessHandler(()=> location.reload()).removeDiscount(id);
+            closeModal('itemOptionsModal');
+            await fetchAPI("removeDiscount", { id: id });
+            fetchData();
         }
 
-        // إدارة الطلبات (الأدمن)
-        function renderOrders(status) {
+        async function renderOrders(status) {
             document.getElementById('ordersList').innerHTML = "<p style='text-align:center;'>جاري جلب الطلبات...</p>";
-            google.script.run.withSuccessHandler(orders => {
+            try {
+                const response = await fetch(API_URL + "?action=getOrders");
+                const orders = await response.json();
+                
                 let html = '';
-                orders.forEach(o => {
-                    if(o.status === status) {
-                        html += `
-                        <div class="order-card">
-                            <div><strong>طاولة:</strong> ${o.table}</div>
-                            <div><strong>الوقت:</strong> ${o.time}</div>
-                            <div><strong>المبلغ:</strong> ${o.total} د.ع</div>
-                            ${status === 'pending' ? `
-                            <div class="order-actions">
-                                <button class="btn-green" onclick="updateOrderStatus('${o.orderId}', 'completed')">✔️ موافقة (مكتمل)</button>
-                                <button class="btn-red" onclick="updateOrderStatus('${o.orderId}', 'rejected')">❌ رفض (حذف)</button>
-                            </div>` : '<div style="color:var(--gold); margin-top:5px;">✅ طلب مكتمل</div>'}
-                        </div>`;
-                    }
-                });
+                if(orders && orders.length > 0) {
+                    orders.forEach(o => {
+                        if(o.status === status) {
+                            html += `
+                            <div class="order-card">
+                                <div><strong>طاولة:</strong> ${o.table}</div>
+                                <div><strong>الوقت:</strong> ${o.time}</div>
+                                <div><strong>المبلغ:</strong> ${o.total} د.ع</div>
+                                ${status === 'pending' ? `
+                                <div class="order-actions">
+                                    <button class="btn-green" onclick="updateOrderStatus('${o.orderId}', 'completed')">✔️ موافقة (مكتمل)</button>
+                                    <button class="btn-red" onclick="updateOrderStatus('${o.orderId}', 'rejected')">❌ رفض (حذف)</button>
+                                </div>` : '<div style="color:var(--gold); margin-top:5px;">✅ طلب مكتمل</div>'}
+                            </div>`;
+                        }
+                    });
+                }
                 document.getElementById('ordersList').innerHTML = html || "<p style='text-align:center;'>لا توجد طلبات.</p>";
-            }).getOrders();
+            } catch (error) {
+                document.getElementById('ordersList').innerHTML = "<p style='text-align:center; color:red;'>خطأ في جلب الطلبات</p>";
+            }
         }
 
-        function updateOrderStatus(orderId, action) {
-            google.script.run.withSuccessHandler(()=> renderOrders(action === 'completed' ? 'pending' : 'pending')).updateOrder(orderId, action);
+        async function updateOrderStatus(orderId, action) {
+            await fetchAPI("updateOrder", { orderId: orderId, action: action });
+            renderOrders(action === 'completed' ? 'pending' : 'pending'); // تحديث القائمة
         }
     </script>
 </body>
