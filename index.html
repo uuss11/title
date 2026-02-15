@@ -646,15 +646,24 @@
             }, 1500);
         }
 
-        // ================= 4. نظام الأدمن =================
+                // ================= 4. نظام الأدمن =================
         async function loginAdmin() {
             let u = document.getElementById('adminUser').value;
             let p = document.getElementById('adminPass').value;
-            document.getElementById('loginMsg').innerText = "جاري التحقق...";
+            
+            // تثبيت اليوزر نيم برمجياً
+            const FIXED_ADMIN_USER = "admin"; 
+
+            if (u !== FIXED_ADMIN_USER) {
+                document.getElementById('loginMsg').innerText = "اسم المستخدم غير صحيح";
+                return;
+            }
+
+            document.getElementById('loginMsg').innerText = "جاري التحقق من كلمة المرور...";
             
             try {
-                // جلب التحقق عبر GET للالتفاف على قيود CORS في المتصفح
-                const response = await fetch(API_URL + `?action=verifyAdmin&u=${u}&p=${p}`);
+                // نرسل كلمة المرور فقط للتحقق منها من السيرفر (GAS)
+                const response = await fetch(API_URL + `?action=verifyAdmin&p=${p}`);
                 const res = await response.json();
                 
                 if(res.success) {
@@ -663,15 +672,14 @@
                     document.getElementById('adminDock').style.display = 'flex';
                     renderMenu(); 
                 } else {
-                    document.getElementById('loginMsg').innerText = res.msg || "خطأ في بيانات الدخول";
+                    document.getElementById('loginMsg').innerText = res.msg || "كلمة المرور خاطئة";
                 }
             } catch (e) {
-                // للتبسيط، إذا كان هناك مشكلة في الـ CORS سنفترض نجاح الدخول مؤقتاً للتجربة 
-                // في الواقع يجب أن يرد الـ GAS برأس Access-Control-Allow-Origin
-                document.getElementById('loginMsg').innerText = "حدث خطأ في الاتصال، يرجى التحقق من إعدادات GAS";
+                document.getElementById('loginMsg').innerText = "حدث خطأ في الاتصال بالسيرفر";
                 console.error(e);
             }
         }
+
 
         function addNewItem() {
             let name = document.getElementById('addName').value;
