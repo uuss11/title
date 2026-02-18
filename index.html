@@ -3,696 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المنيو الذهبي الذكي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <title>منيو المطعم الاحترافي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* ================= المتغيرات والألوان ================= */
-        :root {
-            --bg-color: #0f0f0f;
-            --gold: #d4af37;
-            --gold-glow: rgba(212, 175, 55, 0.4);
-            --grey-glass: rgba(40, 40, 40, 0.6);
-            --border-glass: rgba(255, 255, 255, 0.1);
-            --text-main: #ffffff;
-            --text-sub: #b3b3b3;
-            --red-discount: #ff4d4d;
-            --green-price: #00e676;
-        }
-
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            padding-bottom: 80px; /* مساحة لسلة المشتريات */
-            background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000000 100%);
-            min-height: 100vh;
-        }
-
-        /* ================= التأثير الزجاجي (Glassmorphism) ================= */
-        .glass-panel {
-            background: var(--grey-glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--gold);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-        }
-
-        .glass-input {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border-glass);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            width: 100%;
-            box-sizing: border-box;
-            outline: none;
-            transition: border 0.3s;
-        }
-        .glass-input:focus { border-color: var(--gold); }
-
-        .btn-gold {
-            background: linear-gradient(135deg, #d4af37, #aa8529);
-            color: black;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--gold-glow);
-            transition: transform 0.2s;
-        }
-        .btn-gold:active { transform: scale(0.95); }
-
-        /* ================= الهيدر والبحث ================= */
-        header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
-            border-bottom: 2px solid var(--gold);
-        }
-
-        .top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .title {
-            font-size: 24px;
-            font-weight: 700;
-            margin: 0;
-            color: var(--gold);
-            text-shadow: 0 0 5px var(--gold-glow);
-        }
-
-        .admin-btn {
-            background: transparent;
-            color: var(--text-sub);
-            border: 1px solid var(--border-glass);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: color 0.3s, border-color 0.3s;
-        }
-        .admin-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-        .search-area {
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-input {
-            flex: 2;
-        }
-
-        .filter-select {
-            flex: 1;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: 1px solid var(--border-glass);
-            border-radius: 8px;
-            padding: 10px;
-            outline: none;
-        }
-
-        /* ================= شبكة الأكلات ================= */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .item-card {
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-        }
-
-        .item-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px var(--gold-glow);
-        }
-
-        .item-img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-top-left-radius: 15px;
-            border-top-right-radius: 15px;
-            border-bottom: 2px solid var(--gold);
-            position: relative;
-        }
-
-        /* شارة الخصم */
-        .discount-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: var(--red-discount);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 0 10px rgba(255, 77, 77, 0.8);
-            z-index: 10;
-        }
-
-        .item-details {
-            padding: 15px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            position: relative;
-        }
-
-        .item-id { color: var(--text-sub); font-size: 12px; }
-        .item-name { font-size: 18px; font-weight: bold; margin: 0; color: white; }
-
-        .price-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: auto; /* يدفع السعر للأسفل */
-            padding-top: 10px;
-        }
-
-        .price-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .price-old {
-            color: var(--red-discount);
-            text-decoration: line-through;
-            font-size: 12px;
-            margin-bottom: 2px;
-        }
-
-        .price-new {
-            color: var(--green-price);
-            font-weight: bold;
-            font-size: 18px;
-            text-shadow: 0 0 5px rgba(0, 230, 118, 0.3);
-        }
-
-        /* زر الإضافة للسلة الصغير */
-        .add-btn {
-            background: var(--gold);
-            color: black;
-            border: none;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 10px var(--gold-glow);
-            transition: background 0.3s;
-        }
-        .add-btn:active { background: white; }
-
-        /* التقييم بالنجوم */
-        .rating-area {
-            color: var(--gold);
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-top: 5px;
-            cursor: pointer;
-        }
-
-        /* ================= سلة المشتريات الثابتة (Bottom Bar) ================= */
-        .cart-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 999;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
-            border-top: 2px solid var(--gold);
-            border-bottom: none;
-            border-left: none;
-            border-right: none;
-        }
-
-        .cart-info { font-weight: bold; font-size: 16px; }
-
-        /* ================= النوافذ المنبثقة (Modals الزجاجية) ================= */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            z-index: 2000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            width: 100%;
-            max-width: 400px;
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            position: relative;
-        }
-
-        .modal-title {
-            color: var(--gold);
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 10px;
-            border-bottom: 1px solid var(--gold);
-            padding-bottom: 10px;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: none;
-            border: none;
-            color: var(--text-sub);
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        /* ================= خيارات الأدمن (ثلاث نقاط) ================= */
-        .admin-options {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: 1px solid var(--gold);
-            border-radius: 50%;
-            width: 30px; height: 30px;
-            display: flex; justify-content: center; align-items: center;
-            cursor: pointer;
-            z-index: 15;
-            display: none; /* تظهر فقط للأدمن */
-        }
-
-        /* لوحة التحكم الثابتة أسفل الشاشة للأدمن */
-        .admin-dock {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 998;
-        }
-
-        .fab-btn {
-            width: 50px; height: 50px;
-            border-radius: 50%;
-            background: var(--gold);
-            color: black;
-            border: none;
-            font-size: 24px;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5);
-            cursor: pointer;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        /* عناصر الطلبات (للوحة الأدمن) */
-        .order-card {
-            border: 1px solid var(--border-glass);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.3);
-        }
-        .order-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-green { background: var(--green-price); color: black; border:none; padding: 5px 10px; border-radius: 5px; cursor: pointer;}
-        .btn-red { background: var(--red-discount); color: white; border:none; padding: 5px 10px; border-radius: 5px; cursor: pointer;}
-
+        body { font-family: 'Tajawal', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .badge-discount { background: linear-gradient(45deg, #ff416c, #ff4b2b); }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #ff6b00; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 min-h-screen pb-28">
 
-    <header class="glass-panel">
-        <div class="top-row">
-            <h1 class="title">✨ المنيو الذهبي</h1>
-            <button class="admin-btn" onclick="openModal('loginModal')">تسجيل أدمن</button>
+<nav class="glass sticky top-0 z-50 shadow-sm p-4">
+    <div class="max-w-5xl mx-auto flex flex-col gap-4">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-black text-orange-600">🔥 مـطعمنا الذكي</h1>
+            <button onclick="adminLogin()" id="adminBtn" class="bg-gray-800 text-white text-xs px-4 py-2 rounded-full font-bold">دخول الإدارة</button>
         </div>
-        <div class="search-area">
-            <input type="text" id="searchInput" class="glass-input search-input" placeholder="ابحث باسم الأكلة أو المعرف..." onkeyup="renderMenu()">
-            <select id="filterSelect" class="filter-select" onchange="renderMenu()">
+        <div class="flex gap-2">
+            <input id="searchBox" oninput="renderApp()" type="text" placeholder="ابحث عن وجبة..." class="flex-1 p-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-orange-500 outline-none text-sm">
+            <select id="catFilter" onchange="renderApp()" class="p-3 rounded-2xl border-none ring-1 ring-gray-200 text-sm outline-none">
                 <option value="all">الكل</option>
-                <option value="food">أكل</option>
-                <option value="drink">مشروب</option>
+                <option value="أكل">أطباق رئيسية</option>
+                <option value="مشروب">مشروبات</option>
+                <option value="حلويات">حلويات</option>
             </select>
         </div>
-    </header>
-
-    <div class="menu-grid" id="menuContainer">
-        <div style="text-align: center; color: var(--gold); grid-column: 1/-1;">جاري تحميل أشهى الأطباق...</div>
     </div>
+</nav>
 
-    <div class="cart-bar glass-panel" id="cartBar" style="display: none;">
-        <div class="cart-info" id="cartTotal">الطلبات: 0 | الإجمالي: 0 د.ع</div>
-        <button class="btn-gold" onclick="openModal('checkoutModal')">إتمام الطلب</button>
+<main id="appGrid" class="max-w-5xl mx-auto p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></main>
+
+<div id="cartBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-lg glass border shadow-2xl rounded-3xl p-4 hidden z-50 flex justify-between items-center">
+    <div>
+        <span class="text-xs text-gray-500 block">إجمالي الطلب</span>
+        <span id="cartTotal" class="font-black text-orange-600">0 IQD</span>
     </div>
+    <button onclick="openCheckout()" class="bg-orange-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-orange-200">اطلب الآن</button>
+</div>
 
-    <div class="admin-dock" id="adminDock">
-        <button class="fab-btn" onclick="openModal('addModal')" title="إضافة أكلة">➕</button>
-        <button class="fab-btn" onclick="openModal('ordersModal')" title="الطلبات" style="background: white;">📦</button>
+<div id="modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-[100] transition-all">
+    <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-md relative max-h-[90vh] overflow-y-auto shadow-2xl">
+        <button onclick="closeModal()" class="absolute top-6 left-6 text-gray-400 hover:text-black text-3xl">&times;</button>
+        <div id="modalBody" class="mt-4"></div>
     </div>
+</div>
 
-    <div class="modal-overlay" id="loginModal">
-        <div class="modal-content glass-panel">
-            <button class="close-btn" onclick="closeModal('loginModal')">✖</button>
-            <h2 class="modal-title">دخول لوحة التحكم</h2>
-            <p style="font-size: 12px; color: var(--text-sub); text-align: center;">اليوزر الافتراضي: admin</p>
-            <input type="text" id="adminUser" class="glass-input" placeholder="اسم المستخدم">
-            <input type="password" id="adminPass" class="glass-input" placeholder="كلمة المرور">
-            <button class="btn-gold" onclick="loginAdmin()">تسجيل الدخول</button>
-            <div id="loginMsg" style="color: var(--red-discount); text-align: center; font-size: 14px;"></div>
-        </div>
-    </div>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    <div class="modal-overlay" id="addModal">
-        <div class="modal-content glass-panel">
-            <button class="close-btn" onclick="closeModal('addModal')">✖</button>
-            <h2 class="modal-title">إضافة صنف جديد</h2>
-            <input type="text" id="addName" class="glass-input" placeholder="اسم الأكلة / المشروب">
-            <select id="addType" class="glass-input" style="background: rgba(0,0,0,0.8);">
-                <option value="food">أكل</option>
-                <option value="drink">مشروب</option>
-            </select>
-            <input type="number" id="addPrice" class="glass-input" placeholder="السعر (د.ع)">
-            <input type="file" id="addImage" class="glass-input" accept="image/*" style="padding: 5px;">
-            <button class="btn-gold" id="btnPublish" onclick="addNewItem()">نشر بالموقع</button>
-            <div id="addMsg" style="text-align:center; font-size:14px; color: var(--gold);"></div>
-        </div>
-    </div>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAUx02wlCwG41MBEob1Ql6vKwEaotaaY6g",
+        authDomain: "matam-3dad8.firebaseapp.com",
+        databaseURL: "https://matam-3dad8-default-rtdb.firebaseio.com",
+        projectId: "matam-3dad8",
+        storageBucket: "matam-3dad8.firebasestorage.app",
+        messagingSenderId: "275561023621",
+        appId: "1:275561023621:web:123ae0e8173b15895981ec"
+    };
 
-    <div class="modal-overlay" id="itemOptionsModal">
-        <div class="modal-content glass-panel">
-            <button class="close-btn" onclick="closeModal('itemOptionsModal')">✖</button>
-            <h2 class="modal-title">خيارات الصنف</h2>
-            <input type="hidden" id="optItemId">
-            <button class="btn-gold" style="background: var(--red-discount); color: white;" onclick="deleteItem()">🗑 حذف الأكلة</button>
-            <button class="btn-gold" style="background: #3498db; color: white;" onclick="openDiscountMenu()">🏷 إضافة/تعديل خصم</button>
-            <button class="btn-gold" style="background: var(--grey-glass); color: white;" onclick="removeDiscount()">❌ مسح الخصم</button>
-        </div>
-    </div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    <div class="modal-overlay" id="discountModal">
-        <div class="modal-content glass-panel">
-            <button class="close-btn" onclick="closeModal('discountModal')">✖</button>
-            <h2 class="modal-title">إعداد الخصم</h2>
-            <input type="number" id="discPercent" class="glass-input" placeholder="نسبة الخصم % (1 إلى 100)" min="1" max="100">
-            <select id="discDuration" class="glass-input" style="background: rgba(0,0,0,0.8);">
-                <option value="permanent">دائم</option>
-                <option value="hours">ساعات محددة</option>
-                <option value="days">أيام محددة</option>
-            </select>
-            <input type="number" id="discTimeValue" class="glass-input" placeholder="المدة (مثلاً: 5)" style="display: none;">
-            <button class="btn-gold" onclick="applyDiscount()">تطبيق الخصم</button>
-        </div>
-    </div>
+    // State
+    let menu = [], cart = [], isAdmin = false;
 
-    <div class="modal-overlay" id="ratingModal">
-        <div class="modal-content glass-panel" style="text-align: center;">
-            <button class="close-btn" onclick="closeModal('ratingModal')">✖</button>
-            <h2 class="modal-title">تقييمك يهمنا</h2>
-            <p id="rateItemName"></p>
-            <div style="font-size: 40px; color: var(--gold); cursor: pointer; direction: ltr;" id="starContainer">
-                <span onclick="submitRate(1)">☆</span><span onclick="submitRate(2)">☆</span><span onclick="submitRate(3)">☆</span><span onclick="submitRate(4)">☆</span><span onclick="submitRate(5)">☆</span>
-            </div>
-            <input type="hidden" id="rateItemId">
-        </div>
-    </div>
+    // Real-time Sync
+    onValue(ref(db, 'menu'), (snap) => {
+        const data = snap.val();
+        menu = data ? Object.entries(data).map(([k, v]) => ({...v, fKey: k})) : [];
+        renderApp();
+    });
 
-    <div class="modal-overlay" id="checkoutModal">
-        <div class="modal-content glass-panel">
-            <button class="close-btn" onclick="closeModal('checkoutModal')">✖</button>
-            <h2 class="modal-title">تأكيد الطلب</h2>
-            <div id="checkoutItems" style="max-height: 150px; overflow-y: auto; font-size: 14px;"></div>
-            <input type="number" id="tableNumber" class="glass-input" placeholder="رقم الطاولة (1 إلى 30)" min="1" max="30">
-            <button class="btn-gold" id="btnConfirmOrder" onclick="submitOrder()">تأكيد وإرسال الطلب</button>
-            <div id="checkoutMsg" style="text-align:center; font-size:14px; color: var(--gold);"></div>
-        </div>
-    </div>
+    window.renderApp = () => {
+        const grid = document.getElementById('appGrid');
+        const search = document.getElementById('searchBox').value.toLowerCase();
+        const cat = document.getElementById('catFilter').value;
+        grid.innerHTML = '';
 
-    <div class="modal-overlay" id="ordersModal">
-        <div class="modal-content glass-panel" style="max-width: 600px; height: 80vh;">
-            <button class="close-btn" onclick="closeModal('ordersModal')">✖</button>
-            <h2 class="modal-title">الطلبات الواردة</h2>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <button class="btn-gold" style="flex: 1;" onclick="renderOrders('pending')">غير المكتملة</button>
-                <button class="btn-gold" style="flex: 1; background: var(--grey-glass); color: white;" onclick="renderOrders('completed')">المكتملة</button>
-            </div>
-            <div id="ordersList" style="overflow-y: auto; flex-grow: 1;">
+        menu.forEach(item => {
+            if (cat !== 'all' && item.category !== cat) return;
+            if (search && !item.name.toLowerCase().includes(search)) return;
+
+            let finalPrice = item.price;
+            let hasDiscount = item.discount > 0 && (!item.expiry || Date.now() < item.expiry);
+            if(hasDiscount) finalPrice = item.price - (item.price * item.discount / 100);
+
+            grid.innerHTML += `
+                <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-50 group hover:shadow-xl transition-all relative">
+                    ${hasDiscount ? `<span class="absolute top-3 right-3 badge-discount text-white text-[10px] px-3 py-1 rounded-full z-10 font-bold shadow-md">خصم ${item.discount}%</span>` : ''}
+                    <img src="${item.imageUrl}" class="w-full h-40 object-cover group-hover:scale-105 transition-transform" onclick="viewItem('${item.fKey}')">
+                    <div class="p-4">
+                        <h3 class="font-bold text-gray-800 mb-1 truncate">${item.name}</h3>
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-orange-600 font-black text-sm">${finalPrice} IQD</span>
+                            ${hasDiscount ? `<span class="text-gray-300 text-[10px] line-through">${item.price}</span>` : ''}
+                        </div>
+                        <button onclick="addToCart('${item.fKey}')" class="w-full bg-gray-50 hover:bg-orange-600 hover:text-white text-orange-600 py-3 rounded-2xl text-xs font-bold transition-colors">أضف للسلة</button>
+                        ${isAdmin ? `<button onclick="adminTools('${item.fKey}')" class="w-full mt-2 bg-black text-white py-2 rounded-xl text-[10px]">إدارة</button>` : ''}
+                    </div>
                 </div>
-        </div>
-    </div>
+            `;
+        });
+    };
 
-    <script>
-        // المتغيرات الأساسية
-        let isAdmin = false;
-        let menuItems = []; 
-        let cart = {}; 
+    // Cart Logic
+    window.addToCart = (key) => {
+        cart.push(menu.find(i => i.fKey === key));
+        updateCartUI();
+    };
+
+    function updateCartUI() {
+        const bar = document.getElementById('cartBar');
+        if(cart.length > 0) {
+            bar.classList.remove('hidden');
+            let total = cart.reduce((s, i) => {
+                let p = i.price;
+                if(i.discount > 0 && (!i.expiry || Date.now() < i.expiry)) p -= (p * i.discount / 100);
+                return s + p;
+            }, 0);
+            document.getElementById('cartTotal').innerText = total + " IQD";
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+
+    window.openCheckout = () => {
+        let itemsHtml = cart.map((item, idx) => `
+            <div class="flex justify-between items-center mb-3 bg-gray-50 p-3 rounded-xl">
+                <span class="text-sm font-bold">${item.name}</span>
+                <button onclick="removeFromCart(${idx})" class="text-red-500 font-bold">×</button>
+            </div>
+        `).join('');
         
-        // --- الرابط الخاص بـ Google Apps Script ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbxDDM1NML-TexXhIhkFZDhMVezokR4T_iytp74MXxfBh7IFK7Ss6QOAUj9U8cssm7GI/exec";
+        showModal(`
+            <h2 class="text-2xl font-black mb-6">تأكيد طلبك</h2>
+            <div class="mb-6 max-h-48 overflow-y-auto">${itemsHtml}</div>
+            <label class="block text-xs font-bold text-gray-400 mb-2">اختر رقم الطاولة</label>
+            <select id="tNum" class="w-full p-4 bg-gray-100 rounded-2xl mb-6 outline-none appearance-none font-bold">
+                ${Array.from({length:30}, (_,i) => `<option value="${i+1}">طاولة رقم ${i+1}</option>`).join('')}
+            </select>
+            <button onclick="sendOrder()" class="w-full bg-orange-600 text-white p-5 rounded-3xl font-bold shadow-lg">إرسال للمطبخ</button>
+        `);
+    };
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    window.removeFromCart = (idx) => { cart.splice(idx, 1); openCheckout(); updateCartUI(); };
 
-        // دالة مركزية للاتصال بـ GAS (POST)
-        async function fetchAPI(action, payload = {}) {
-            payload.action = action;
-            try {
-                await fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', 
-                    cache: 'no-cache',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                return true; 
-            } catch (error) {
-                console.error("Error:", error);
-                return false;
-            }
+    window.sendOrder = () => {
+        const order = {
+            table: document.getElementById('tNum').value,
+            items: cart.map(i => i.name).join(' + '),
+            status: '⏳ قيد الانتظار',
+            time: new Date().toLocaleTimeString(),
+            total: document.getElementById('cartTotal').innerText
+        };
+        push(ref(db, 'orders'), order).then(() => {
+            alert("تم إرسال طلبك بنجاح!");
+            cart = []; updateCartUI(); closeModal();
+        });
+    };
+
+    // Admin Access
+    window.adminLogin = async () => {
+        const pass = prompt("كلمة مرور الإدارة:");
+        if(!pass) return;
+        const sRef = ref(db, 'settings/adminPass');
+        const snap = await get(sRef);
+        if(!snap.exists()) {
+            await set(sRef, pass);
+            alert("تم تعيين الباسوورد بنجاح!");
+            location.reload();
+        } else if(snap.val() === pass) {
+            isAdmin = true;
+            document.getElementById('adminBtn').innerText = "وضع الإدارة مفعل";
+            renderApp();
+            showAdminMenu();
+        } else {
+            alert("كلمة مرور خاطئة");
         }
-        
-        // جلب المنيو (GET)
-        async function fetchData() {
-            try {
-                const response = await fetch(`${API_URL}?action=getMenuData&t=${new Date().getTime()}`);
-                const data = await response.json();
-                menuItems = data.items || [];
-                renderMenu();
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                document.getElementById('menuContainer').innerHTML = '<div style="color:red; text-align:center;">حدث خطأ في الاتصال بالسيرفر</div>';
-            }
-        }
+    };
 
-        window.onload = fetchData;
+    function showAdminMenu() {
+        const div = document.createElement('div');
+        div.className = "fixed bottom-28 right-6 flex flex-col gap-3 z-50";
+        div.innerHTML = `
+            <button onclick="addForm()" class="bg-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold">＋</button>
+            <button onclick="showOrders()" class="bg-blue-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl">📋</button>
+        `;
+        document.body.appendChild(div);
+    }
 
-        // ================= 1. عرض الأكلات والبحث =================
-        function renderMenu() {
-            const container = document.getElementById('menuContainer');
-            const searchQ = document.getElementById('searchInput').value.toLowerCase();
-            const filter = document.getElementById('filterSelect').value;
-            container.innerHTML = '';
+    window.addForm = () => {
+        showModal(`
+            <h2 class="text-xl font-black mb-4">إضافة صنف جديد</h2>
+            <div class="space-y-3">
+                <input id="n" placeholder="اسم الوجبة" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
+                <select id="c" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
+                    <option>أكل</option><option>مشروب</option><option>حلويات</option>
+                </select>
+                <input id="p" type="number" placeholder="السعر" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
+                <input id="u" placeholder="رابط الصورة المباشر" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
+                <button onclick="saveItem()" class="w-full bg-black text-white p-4 rounded-2xl font-bold">نشر الصنف</button>
+            </div>
+        `);
+    };
 
-            menuItems.forEach((item) => {
-                if(filter !== 'all' && item.type !== filter) return;
-                if(searchQ && !item.name.toLowerCase().includes(searchQ) && !item.id.toString().includes(searchQ)) return;
+    window.saveItem = () => {
+        const newItem = {
+            id: Math.floor(Math.random() * 900) + 100,
+            name: document.getElementById('n').value,
+            category: document.getElementById('c').value,
+            price: Number(document.getElementById('p').value),
+            imageUrl: document.getElementById('u').value,
+            discount: 0, ratingSum: 0, ratingCount: 0
+        };
+        push(ref(db, 'menu'), newItem).then(closeModal);
+    };
 
-                let isDiscounted = item.discount > 0;
-                let finalPrice = isDiscounted ? item.price - (item.price * (item.discount / 100)) : item.price;
-                let avgStars = item.ratingCount > 0 ? (item.totalStars / item.ratingCount).toFixed(1) : 0;
-                let starsDisplay = avgStars > 0 ? `★ ${avgStars} (${item.ratingCount})` : '☆ قيّم الآن';
-                let adminDisplay = isAdmin ? 'display:flex;' : '';
+    window.adminTools = (key) => {
+        const item = menu.find(i => i.fKey === key);
+        showModal(`
+            <h2 class="font-bold mb-4 text-center">${item.name}</h2>
+            <div class="grid grid-cols-1 gap-2">
+                <button onclick="discountUI('${key}')" class="p-4 border rounded-2xl text-red-500 font-bold">تفعيل خصم %</button>
+                <button onclick="update(ref(db, 'menu/${key}'), {discount:0})" class="p-4 border rounded-2xl">إزالة الخصم</button>
+                <button onclick="if(confirm('حذف؟')) remove(ref(db, 'menu/${key}'))" class="p-4 bg-red-50 text-red-600 rounded-2xl">حذف نهائي</button>
+            </div>
+        `);
+    };
 
-                container.innerHTML += `
-                    <div class="item-card glass-panel" data-id="${item.id}">
-                        ${isDiscounted ? `<div class="discount-badge">خصم ${item.discount}%</div>` : ''}
-                        <div class="admin-options" style="${adminDisplay}" onclick="openAdminOptions('${item.id}', event)">⋮</div>
-                        <img src="${item.imgUrl}" class="item-img" onclick="openRating('${item.id}', '${item.name}')">
-                        <div class="item-details">
-                            <span class="item-id">المعرف: #${item.id}</span>
-                            <h3 class="item-name">${item.name}</h3>
-                            <div class="rating-area" onclick="openRating('${item.id}', '${item.name}')">${starsDisplay}</div>
-                            <div class="price-area">
-                                <div class="price-group">
-                                    ${isDiscounted ? `<span class="price-old">${item.price} د.ع</span>` : ''}
-                                    <span class="price-new">${finalPrice} د.ع</span>
-                                </div>
-                                <button class="add-btn" onclick="addToCart('${item.id}')">+</button>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-        }
+    window.discountUI = (key) => {
+        showModal(`
+            <h2 class="font-bold mb-4">ضبط الخصم</h2>
+            <input id="perc" type="number" placeholder="نسبة الخصم (مثلاً 20)" class="w-full p-4 bg-gray-50 rounded-2xl mb-2">
+            <select id="dur" class="w-full p-4 bg-gray-50 rounded-2xl mb-4">
+                <option value="1">ساعة واحدة</option>
+                <option value="24">يوم كامل</option>
+                <option value="8760">دائم</option>
+            </select>
+            <button id="dBtn" class="w-full bg-red-600 text-white p-4 rounded-2xl font-bold">تأكيد الخصم</button>
+        `);
+        document.getElementById('dBtn').onclick = () => {
+            const expiry = Date.now() + (Number(document.getElementById('dur').value) * 3600000);
+            update(ref(db, `menu/${key}`), { discount: Number(document.getElementById('perc').value), expiry }).then(closeModal);
+        };
+    };
 
-        // ================= 2. نظام السلة والطلبات =================
-        function addToCart(id) {
-            cart[id] = (cart[id] || 0) + 1;
-            updateCartUI();
-        }
+    window.showOrders = () => {
+        get(ref(db, 'orders')).then(snap => {
+            const data = snap.val();
+            let html = data ? Object.entries(data).reverse().map(([k, v]) => `
+                <div class="p-4 border-b text-xs mb-2">
+                    <div class="flex justify-between font-black mb-1"><span>طاولة ${v.table}</span> <span class="text-orange-600">${v.status}</span></div>
+                    <div class="text-gray-500 mb-2">${v.items}</div>
+                    <div class="flex gap-2 font-bold">
+                        <button onclick="updateOrder('${k}', '✅ اكتمل')" class="text-green-600 border border-green-600 px-3 py-1 rounded-lg">اكتمل</button>
+                        <button onclick="remove(ref(db, 'orders/${k}')).then(showOrders)" class="text-red-400 border border-red-400 px-3 py-1 rounded-lg">حذف</button>
+                    </div>
+                </div>
+            `).join('') : 'لا توجد طلبات حالية';
+            showModal(`<h2 class="font-black mb-4">قائمة الطلبات</h2><div class="max-h-96 overflow-y-auto">${html}</div>`);
+        });
+    };
 
-        function updateCartUI() {
-            let totalItems = 0, totalPrice = 0;
-            for(let id in cart) {
-                let item = menuItems.find(i => i.id == id);
-                if(item) {
-                    let price = item.discount > 0 ? item.price * (1 - item.discount/100) : item.price;
-                    totalItems += cart[id];
-                    totalPrice += (price * cart[id]);
-                }
-            }
-            document.getElementById('cartBar').style.display = totalItems > 0 ? 'flex' : 'none';
-            document.getElementById('cartTotal').innerText = `الطلبات: ${totalItems} | الإجمالي: ${totalPrice} د.ع`;
-        }
+    window.updateOrder = (k, s) => update(ref(db, `orders/${k}`), {status: s}).then(showOrders);
 
-        async function submitOrder() {
-            let table = document.getElementById('tableNumber').value;
-            if(!table || table < 1 || table > 30) return alert("رقم طاولة غير صحيح");
-            document.getElementById('btnConfirmOrder').innerText = "جاري الإرسال...";
-            await fetchAPI("placeOrder", { table: table, cart: cart });
-            document.getElementById('checkoutMsg').innerText = "تم استلام طلبك!";
-            setTimeout(() => { cart = {}; updateCartUI(); closeModal('checkoutModal'); document.getElementById('btnConfirmOrder').innerText = "تأكيد الطلب"; }, 2000);
-        }
+    window.viewItem = (key) => {
+        const item = menu.find(i => i.fKey === key);
+        showModal(`
+            <img src="${item.imageUrl}" class="w-full h-56 object-cover rounded-[2rem] mb-6 shadow-xl">
+            <h2 class="text-2xl font-black mb-2">${item.name}</h2>
+            <div class="flex items-center gap-2 mb-6">
+                <span class="text-orange-500 text-lg">⭐ ${(item.ratingSum/(item.ratingCount||1)).toFixed(1)}</span>
+                <span class="text-gray-400 text-xs">(${item.ratingCount || 0} تقييم)</span>
+            </div>
+            <p class="text-gray-400 text-sm mb-6">ما هو تقييمك لهذه الوجبة؟</p>
+            <div class="flex justify-center gap-3">
+                ${[1,2,3,4,5].map(n => `<button onclick="rateItem('${key}', ${n})" class="text-4xl hover:scale-125 transition-transform">⭐</button>`).join('')}
+            </div>
+        `);
+    };
 
-        // ================= 3. نظام التقييم =================
-        function openRating(id, name) {
-            document.getElementById('rateItemId').value = id;
-            document.getElementById('rateItemName').innerText = name;
-            openModal('ratingModal');
-        }
+    window.rateItem = (key, stars) => {
+        const item = menu.find(i => i.fKey === key);
+        update(ref(db, `menu/${key}`), {
+            ratingSum: (item.ratingSum || 0) + stars,
+            ratingCount: (item.ratingCount || 0) + 1
+        }).then(() => { alert("شكراً لتقييمك!"); closeModal(); });
+    };
 
-        async function submitRate(stars) {
-            let id = document.getElementById('rateItemId').value;
-            document.getElementById('starContainer').innerHTML = "شكراً لتقييمك!";
-            await fetchAPI("rateItem", { id: id, stars: stars });
-            setTimeout(() => { closeModal('ratingModal'); fetchData(); }, 1500);
-        }
-
-        // ================= 4. نظام الأدمن =================
-        async function loginAdmin() {
-            let u = document.getElementById('adminUser').value;
-            let p = document.getElementById('adminPass').value;
-            if (u !== "admin") return document.getElementById('loginMsg').innerText = "اليوزر خطأ";
-            
-            document.getElementById('loginMsg').innerText = "جاري التحقق...";
-            try {
-                const res = await fetch(`${API_URL}?action=verifyAdmin&p=${encodeURIComponent(p)}&t=${new Date().getTime()}`);
-                const data = await res.json();
-                if(data.success) {
-                    isAdmin = true;
-                    closeModal('loginModal');
-                    document.getElementById('adminDock').style.display = 'flex';
-                    renderMenu();
-                } else {
-                    document.getElementById('loginMsg').innerText = "الباسوورد خطأ";
-                }
-            } catch (e) {
-                document.getElementById('loginMsg').innerText = "فشل الاتصال";
-            }
-        }
-
-        function addNewItem() {
-            let name = document.getElementById('addName').value;
-            let type = document.getElementById('addType').value;
-            let price = document.getElementById('addPrice').value;
-            let file = document.getElementById('addImage').files[0];
-            if(!name || !price || !file) return alert("أكمل البيانات");
-
-            document.getElementById('btnPublish').innerText = "جاري الرفع...";
-            let reader = new FileReader();
-            reader.onload = async function(e) {
-                await fetchAPI("saveNewItem", { name: name, type: type, price: price, base64: e.target.result, filename: file.name });
-                document.getElementById('addMsg').innerText = "تمت الإضافة!";
-                setTimeout(() => { closeModal('addModal'); fetchData(); }, 1500);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function openAdminOptions(id, event) {
-            event.stopPropagation();
-            document.getElementById('optItemId').value = id;
-            openModal('itemOptionsModal');
-        }
-
-        async function deleteItem() {
-            if(confirm("حذف نهائي؟")) {
-                await fetchAPI("deleteItem", { id: document.getElementById('optItemId').value });
-                closeModal('itemOptionsModal'); fetchData();
-            }
-        }
-
-        function openDiscountMenu() { closeModal('itemOptionsModal'); openModal('discountModal'); }
-
-        async function applyDiscount() {
-            let id = document.getElementById('optItemId').value;
-            let percent = document.getElementById('discPercent').value;
-            await fetchAPI("setDiscount", { id: id, percent: percent });
-            closeModal('discountModal'); fetchData();
-        }
-
-        async function removeDiscount() {
-            await fetchAPI("removeDiscount", { id: document.getElementById('optItemId').value });
-            closeModal('itemOptionsModal'); fetchData();
-        }
-
-        async function renderOrders(status) {
-            document.getElementById('ordersList').innerHTML = "جاري الجلب...";
-            const res = await fetch(`${API_URL}?action=getOrders&t=${new Date().getTime()}`);
-            const orders = await res.json();
-            let html = '';
-            orders.forEach(o => {
-                if(o.status === status) {
-                    html += `<div class="order-card">
-                        <div>طاولة: ${o.table} | مبلغ: ${o.total}</div>
-                        <div class="order-actions">
-                            ${status === 'pending' ? `<button class="btn-green" onclick="updateOrderStatus('${o.orderId}', 'completed')">تم</button>` : 'مكتمل'}
-                        </div>
-                    </div>`;
-                }
-            });
-            document.getElementById('ordersList').innerHTML = html || "لا يوجد";
-        }
-
-        async function updateOrderStatus(id, action) {
-            await fetchAPI("updateOrder", { orderId: id, action: action });
-            renderOrders('pending');
-        }
-    </script>
+    // UI Helpers
+    window.showModal = (content) => { document.getElementById('modalBody').innerHTML = content; document.getElementById('modal').classList.remove('hidden'); };
+    window.closeModal = () => document.getElementById('modal').classList.add('hidden');
+</script>
 </body>
 </html>
+
