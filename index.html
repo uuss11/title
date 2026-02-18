@@ -3,50 +3,144 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منيو المطعم الاحترافي</title>
+    <title>مطعم النخبة - تجربة طعام ذكية</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Tajawal', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .badge-discount { background: linear-gradient(45deg, #ff416c, #ff4b2b); }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #ff6b00; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        :root {
+            --primary: #ea580c;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --grad: linear-gradient(135deg, #ea580c 0%, #fb923c 100%);
+        }
+
+        body { 
+            font-family: 'Tajawal', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ثيم القهوة المتحرك */
+        .theme-brown {
+            --bg-body: #2d1b14;
+            --card-bg: #3e2723;
+            --text-main: #efebe9;
+            --primary: #d7ccc8;
+            background: linear-gradient(270deg, #2d1b14, #4e342e, #2d1b14);
+            background-size: 600% 600%;
+            animation: moveGrad 10s ease infinite;
+        }
+
+        /* ثيم الأسود اللامع */
+        .theme-dark {
+            --bg-body: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --primary: #38bdf8;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        }
+
+        /* ثيم النيلي */
+        .theme-indigo {
+            --bg-body: #eef2ff;
+            --card-bg: #ffffff;
+            --text-main: #1e1b4b;
+            --primary: #4338ca;
+        }
+
+        @keyframes moveGrad {
+            0%{background-position:0% 50%}
+            50%{background-position:100% 50%}
+            100%{background-position:0% 50%}
+        }
+
+        .glass-nav { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .theme-dark .glass-nav { background: rgba(15, 23, 42, 0.8); border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+        .sidebar { transform: translateX(100%); transition: transform 0.3s ease; }
+        .sidebar.active { transform: translateX(0); }
+        
+        .food-card { background: var(--card-bg); border-radius: 2rem; overflow: hidden; transition: all 0.3s; border: 1px solid rgba(0,0,0,0.05); }
+        .food-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+
+        .btn-grad { background: var(--grad); color: white; transition: opacity 0.2s; }
+        .btn-grad:hover { opacity: 0.9; }
+        
+        .star-rating .star { cursor: pointer; font-size: 1.5rem; transition: transform 0.2s; }
+        .star-rating .star:hover { transform: scale(1.3); }
+        .star-active { color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen pb-28">
+<body class="min-h-screen pb-20">
 
-<nav class="glass sticky top-0 z-50 shadow-sm p-4">
-    <div class="max-w-5xl mx-auto flex flex-col gap-4">
-        <div class="flex justify-between items-center">
-            <h1 class="text-2xl font-black text-orange-600">🔥 مـطعمنا الذكي</h1>
-            <button onclick="adminLogin()" id="adminBtn" class="bg-gray-800 text-white text-xs px-4 py-2 rounded-full font-bold">دخول الإدارة</button>
+<div id="overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-[60] hidden"></div>
+<aside id="sidebar" class="fixed top-0 right-0 w-80 h-full bg-white dark:bg-slate-900 z-[70] sidebar p-6 shadow-2xl overflow-y-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-xl font-black">الاعدادات والثيمات</h2>
+        <button onclick="toggleSidebar()" class="text-2xl">&times;</button>
+    </div>
+    
+    <div class="space-y-6">
+        <div>
+            <p class="text-sm text-gray-400 mb-4">اختر سمة المظهر</p>
+            <div id="themesList" class="grid grid-cols-1 gap-3">
+                </div>
         </div>
-        <div class="flex gap-2">
-            <input id="searchBox" oninput="renderApp()" type="text" placeholder="ابحث عن وجبة..." class="flex-1 p-3 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-orange-500 outline-none text-sm">
-            <select id="catFilter" onchange="renderApp()" class="p-3 rounded-2xl border-none ring-1 ring-gray-200 text-sm outline-none">
-                <option value="all">الكل</option>
-                <option value="أكل">أطباق رئيسية</option>
-                <option value="مشروب">مشروبات</option>
-                <option value="حلويات">حلويات</option>
-            </select>
+
+        <div id="adminThemeZone" class="hidden border-t pt-6">
+            <p class="text-sm font-bold mb-3 text-orange-600">لوحة المطور: إضافة ثيم جديد</p>
+            <input id="newThemeName" placeholder="اسم الثيم" class="w-full p-2 text-sm border rounded mb-2 outline-none">
+            <div class="flex gap-2 mb-2">
+                <input type="color" id="color1" class="h-10 w-full rounded cursor-pointer" title="اللون الأول">
+                <input type="color" id="color2" class="h-10 w-full rounded cursor-pointer" title="اللون الثاني">
+            </div>
+            <button onclick="addNewTheme()" class="w-full bg-black text-white py-2 rounded-lg text-xs">نشر الثيم الجديد</button>
         </div>
+    </div>
+</aside>
+
+<nav class="glass-nav sticky top-0 z-50 p-4">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <button onclick="toggleSidebar()" class="w-10 h-10 flex flex-col justify-center gap-1.5 items-center bg-gray-100 rounded-xl">
+            <span class="w-5 h-0.5 bg-gray-800"></span>
+            <span class="w-5 h-0.5 bg-gray-800"></span>
+            <span class="w-5 h-0.5 bg-gray-800"></span>
+        </button>
+        <h1 class="text-xl font-black tracking-tighter">LUXURY <span class="text-orange-600">MENU</span></h1>
+        <button onclick="adminLogin()" id="adminBtn" class="bg-gray-100 text-[10px] px-4 py-2 rounded-full font-bold uppercase tracking-widest">Admin</button>
     </div>
 </nav>
 
-<main id="appGrid" class="max-w-5xl mx-auto p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></main>
-
-<div id="cartBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-lg glass border shadow-2xl rounded-3xl p-4 hidden z-50 flex justify-between items-center">
-    <div>
-        <span class="text-xs text-gray-500 block">إجمالي الطلب</span>
-        <span id="cartTotal" class="font-black text-orange-600">0 IQD</span>
+<div class="max-w-6xl mx-auto px-4 mt-6">
+    <div class="flex gap-3 mb-8">
+        <input id="searchBox" oninput="renderApp()" type="text" placeholder="ابحث عن وجبتك المفضلة..." class="flex-1 p-4 rounded-2xl bg-white shadow-sm outline-none ring-2 ring-transparent focus:ring-orange-500 transition-all">
+        <select id="catFilter" onchange="renderApp()" class="p-4 rounded-2xl bg-white shadow-sm outline-none border-none">
+            <option value="all">كل الأصناف</option>
+            <option value="أكل">الأطباق</option>
+            <option value="مشروب">المشروبات</option>
+            <option value="حلويات">الحلويات</option>
+        </select>
     </div>
-    <button onclick="openCheckout()" class="bg-orange-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-orange-200">اطلب الآن</button>
+
+    <main id="appGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></main>
 </div>
 
-<div id="modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-[100] transition-all">
-    <div class="bg-white rounded-[2.5rem] p-8 w-full max-w-md relative max-h-[90vh] overflow-y-auto shadow-2xl">
-        <button onclick="closeModal()" class="absolute top-6 left-6 text-gray-400 hover:text-black text-3xl">&times;</button>
+<div id="cartBar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white dark:bg-slate-800 shadow-2xl rounded-3xl p-4 hidden z-50 flex justify-between items-center border border-orange-100">
+    <div class="flex items-center gap-4">
+        <div class="bg-orange-100 text-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center font-black">🛒</div>
+        <div>
+            <p class="text-[10px] opacity-60">إجمالي طلبك</p>
+            <p id="cartTotal" class="font-black text-lg">0 IQD</p>
+        </div>
+    </div>
+    <button onclick="openCheckout()" class="btn-grad px-8 py-3 rounded-2xl font-bold">تأكيد</button>
+</div>
+
+<div id="modal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+    <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 w-full max-w-md relative max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
+        <button onclick="closeModal()" class="absolute top-6 left-6 text-gray-400 text-3xl">&times;</button>
         <div id="modalBody" class="mt-4"></div>
     </div>
 </div>
@@ -68,15 +162,50 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // State
-    let menu = [], cart = [], isAdmin = false;
+    let menu = [], cart = [], isAdmin = false, currentPass = "";
+    let themes = [
+        { id: 'light', name: 'أبيض ناصع', class: '', preview: '#ffffff' },
+        { id: 'brown', name: 'قهوة كلاسيك', class: 'theme-brown', preview: '#4e342e' },
+        { id: 'dark', name: 'أسود فاخر', class: 'theme-dark', preview: '#0f172a' },
+        { id: 'indigo', name: 'نيلي هادئ', class: 'theme-indigo', preview: '#4338ca' }
+    ];
 
-    // Real-time Sync
+    // Load Saved Theme
+    const savedTheme = localStorage.getItem('user-theme') || 'light';
+    applyTheme(savedTheme);
+
+    // Initial Sync
     onValue(ref(db, 'menu'), (snap) => {
         const data = snap.val();
         menu = data ? Object.entries(data).map(([k, v]) => ({...v, fKey: k})) : [];
         renderApp();
     });
+
+    onValue(ref(db, 'settings/themes'), (snap) => {
+        const customThemes = snap.val() ? Object.values(snap.val()) : [];
+        renderThemesMenu(customThemes);
+    });
+
+    window.toggleSidebar = () => {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('overlay').classList.toggle('hidden');
+    };
+
+    function renderThemesMenu(custom = []) {
+        const list = document.getElementById('themesList');
+        const allThemes = [...themes, ...custom];
+        list.innerHTML = allThemes.map(t => `
+            <button onclick="applyTheme('${t.class}', '${t.id}')" class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800 hover:scale-105 transition-transform">
+                <div class="w-8 h-8 rounded-lg shadow-inner" style="background: ${t.preview}"></div>
+                <span class="text-sm font-bold">${t.name}</span>
+            </button>
+        `).join('');
+    }
+
+    window.applyTheme = (cls, id) => {
+        document.body.className = "min-h-screen pb-20 " + cls;
+        if(id) localStorage.setItem('user-theme', cls);
+    };
 
     window.renderApp = () => {
         const grid = document.getElementById('appGrid');
@@ -93,17 +222,24 @@
             if(hasDiscount) finalPrice = item.price - (item.price * item.discount / 100);
 
             grid.innerHTML += `
-                <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-50 group hover:shadow-xl transition-all relative">
-                    ${hasDiscount ? `<span class="absolute top-3 right-3 badge-discount text-white text-[10px] px-3 py-1 rounded-full z-10 font-bold shadow-md">خصم ${item.discount}%</span>` : ''}
-                    <img src="${item.imageUrl}" class="w-full h-40 object-cover group-hover:scale-105 transition-transform" onclick="viewItem('${item.fKey}')">
-                    <div class="p-4">
-                        <h3 class="font-bold text-gray-800 mb-1 truncate">${item.name}</h3>
-                        <div class="flex items-center gap-2 mb-4">
-                            <span class="text-orange-600 font-black text-sm">${finalPrice} IQD</span>
-                            ${hasDiscount ? `<span class="text-gray-300 text-[10px] line-through">${item.price}</span>` : ''}
+                <div class="food-card group">
+                    <div class="relative overflow-hidden">
+                        ${hasDiscount ? `<span class="absolute top-4 right-4 bg-red-500 text-white text-[10px] px-3 py-1 rounded-full z-10 font-bold">خصم ${item.discount}%</span>` : ''}
+                        <img src="${item.imageUrl}" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500 cursor-pointer" onclick="viewItem('${item.fKey}')">
+                    </div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-lg truncate">${item.name}</h3>
+                            <span class="text-[10px] bg-orange-100 text-orange-600 px-2 py-1 rounded-lg">${item.category}</span>
                         </div>
-                        <button onclick="addToCart('${item.fKey}')" class="w-full bg-gray-50 hover:bg-orange-600 hover:text-white text-orange-600 py-3 rounded-2xl text-xs font-bold transition-colors">أضف للسلة</button>
-                        ${isAdmin ? `<button onclick="adminTools('${item.fKey}')" class="w-full mt-2 bg-black text-white py-2 rounded-xl text-[10px]">إدارة</button>` : ''}
+                        <div class="flex items-center gap-2 mb-5">
+                            <span class="text-orange-600 font-black">${finalPrice.toLocaleString()} IQD</span>
+                            ${hasDiscount ? `<span class="text-gray-400 text-xs line-through">${item.price.toLocaleString()}</span>` : ''}
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="addToCart('${item.fKey}')" class="w-full bg-slate-100 hover:bg-orange-600 hover:text-white py-3 rounded-2xl text-sm font-bold transition-all">إضافة للسلة</button>
+                            ${isAdmin ? `<button onclick="adminTools('${item.fKey}')" class="w-full bg-black text-white py-2 rounded-xl text-[10px]">⚙️ خيارات الإدارة</button>` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -112,7 +248,8 @@
 
     // Cart Logic
     window.addToCart = (key) => {
-        cart.push(menu.find(i => i.fKey === key));
+        const item = menu.find(i => i.fKey === key);
+        cart.push(item);
         updateCartUI();
     };
 
@@ -125,7 +262,7 @@
                 if(i.discount > 0 && (!i.expiry || Date.now() < i.expiry)) p -= (p * i.discount / 100);
                 return s + p;
             }, 0);
-            document.getElementById('cartTotal').innerText = total + " IQD";
+            document.getElementById('cartTotal').innerText = total.toLocaleString() + " IQD";
         } else {
             bar.classList.add('hidden');
         }
@@ -133,20 +270,22 @@
 
     window.openCheckout = () => {
         let itemsHtml = cart.map((item, idx) => `
-            <div class="flex justify-between items-center mb-3 bg-gray-50 p-3 rounded-xl">
+            <div class="flex justify-between items-center mb-3 bg-gray-50 dark:bg-slate-800 p-4 rounded-2xl">
                 <span class="text-sm font-bold">${item.name}</span>
-                <button onclick="removeFromCart(${idx})" class="text-red-500 font-bold">×</button>
+                <button onclick="removeFromCart(${idx})" class="text-red-500 text-xl font-bold">&times;</button>
             </div>
         `).join('');
         
         showModal(`
-            <h2 class="text-2xl font-black mb-6">تأكيد طلبك</h2>
-            <div class="mb-6 max-h-48 overflow-y-auto">${itemsHtml}</div>
-            <label class="block text-xs font-bold text-gray-400 mb-2">اختر رقم الطاولة</label>
-            <select id="tNum" class="w-full p-4 bg-gray-100 rounded-2xl mb-6 outline-none appearance-none font-bold">
-                ${Array.from({length:30}, (_,i) => `<option value="${i+1}">طاولة رقم ${i+1}</option>`).join('')}
-            </select>
-            <button onclick="sendOrder()" class="w-full bg-orange-600 text-white p-5 rounded-3xl font-bold shadow-lg">إرسال للمطبخ</button>
+            <h2 class="text-2xl font-black mb-6 flex items-center gap-2">🛒 تأكيد الطلب</h2>
+            <div class="mb-6 max-h-60 overflow-y-auto pr-2">${itemsHtml}</div>
+            <div class="bg-orange-50 p-4 rounded-2xl mb-6">
+                 <label class="block text-xs font-bold text-orange-400 mb-2 uppercase">موقع الجلوس</label>
+                <select id="tNum" class="w-full bg-transparent outline-none font-black text-lg">
+                    ${Array.from({length:30}, (_,i) => `<option value="${i+1}">طاولة رقم ${i+1}</option>`).join('')}
+                </select>
+            </div>
+            <button onclick="sendOrder()" class="w-full btn-grad p-5 rounded-3xl font-bold shadow-xl shadow-orange-200">إرسال الطلب للمطبخ</button>
         `);
     };
 
@@ -157,63 +296,70 @@
             table: document.getElementById('tNum').value,
             items: cart.map(i => i.name).join(' + '),
             status: '⏳ قيد الانتظار',
-            time: new Date().toLocaleTimeString(),
+            time: new Date().toLocaleTimeString('ar-EG'),
             total: document.getElementById('cartTotal').innerText
         };
         push(ref(db, 'orders'), order).then(() => {
-            alert("تم إرسال طلبك بنجاح!");
-            cart = []; updateCartUI(); closeModal();
+            showModal(`<div class="text-center py-10">
+                <div class="text-6xl mb-4">✅</div>
+                <h2 class="text-2xl font-black">تم الإرسال!</h2>
+                <p class="text-gray-400 mt-2">طلبك الآن تحت التحضير</p>
+            </div>`);
+            setTimeout(closeModal, 2000);
+            cart = []; updateCartUI();
         });
     };
 
-    // Admin Access
+    // Admin
     window.adminLogin = async () => {
         const pass = prompt("كلمة مرور الإدارة:");
         if(!pass) return;
-        const sRef = ref(db, 'settings/adminPass');
-        const snap = await get(sRef);
+        const snap = await get(ref(db, 'settings/adminPass'));
         if(!snap.exists()) {
-            await set(sRef, pass);
-            alert("تم تعيين الباسوورد بنجاح!");
+            await set(ref(db, 'settings/adminPass'), pass);
             location.reload();
         } else if(snap.val() === pass) {
             isAdmin = true;
-            document.getElementById('adminBtn').innerText = "وضع الإدارة مفعل";
+            currentPass = pass;
+            document.getElementById('adminBtn').innerText = "وضع الإدارة";
+            document.getElementById('adminThemeZone').classList.remove('hidden');
             renderApp();
-            showAdminMenu();
+            showAdminFloatingButtons();
         } else {
             alert("كلمة مرور خاطئة");
         }
     };
 
-    function showAdminMenu() {
+    function showAdminFloatingButtons() {
         const div = document.createElement('div');
         div.className = "fixed bottom-28 right-6 flex flex-col gap-3 z-50";
         div.innerHTML = `
-            <button onclick="addForm()" class="bg-black text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl font-bold">＋</button>
-            <button onclick="showOrders()" class="bg-blue-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-xl">📋</button>
+            <button onclick="addForm()" class="bg-black text-white w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center text-3xl font-light">＋</button>
+            <button onclick="showOrders()" class="bg-white text-black border-2 border-black w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center text-xl">📋</button>
         `;
         document.body.appendChild(div);
     }
 
     window.addForm = () => {
         showModal(`
-            <h2 class="text-xl font-black mb-4">إضافة صنف جديد</h2>
-            <div class="space-y-3">
-                <input id="n" placeholder="اسم الوجبة" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
-                <select id="c" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
+            <h2 class="text-xl font-black mb-6">صنف جديد</h2>
+            <div class="space-y-4">
+                <input id="n" placeholder="اسم الوجبة" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
+                <select id="c" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
                     <option>أكل</option><option>مشروب</option><option>حلويات</option>
                 </select>
-                <input id="p" type="number" placeholder="السعر" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
-                <input id="u" placeholder="رابط الصورة المباشر" class="w-full p-4 bg-gray-50 rounded-2xl outline-none">
-                <button onclick="saveItem()" class="w-full bg-black text-white p-4 rounded-2xl font-bold">نشر الصنف</button>
+                <input id="p" type="number" placeholder="السعر" class="w-full p-4 bg-gray-100 rounded-2xl outline-none">
+                <div>
+                    <input id="u" placeholder="رابط الصورة" class="w-full p-4 bg-gray-100 rounded-2xl outline-none mb-1">
+                    <p class="text-[10px] text-red-500 font-bold">لاستخراج رابط الصورة <a href="https://catbox.moe/#" target="_blank" class="text-green-600 underline">انقر هنا</a></p>
+                </div>
+                <button onclick="saveItem()" class="w-full bg-black text-white p-5 rounded-2xl font-bold">حفظ الصنف</button>
             </div>
         `);
     };
 
     window.saveItem = () => {
         const newItem = {
-            id: Math.floor(Math.random() * 900) + 100,
             name: document.getElementById('n').value,
             category: document.getElementById('c').value,
             price: Number(document.getElementById('p').value),
@@ -226,64 +372,89 @@
     window.adminTools = (key) => {
         const item = menu.find(i => i.fKey === key);
         showModal(`
-            <h2 class="font-bold mb-4 text-center">${item.name}</h2>
-            <div class="grid grid-cols-1 gap-2">
-                <button onclick="discountUI('${key}')" class="p-4 border rounded-2xl text-red-500 font-bold">تفعيل خصم %</button>
-                <button onclick="update(ref(db, 'menu/${key}'), {discount:0})" class="p-4 border rounded-2xl">إزالة الخصم</button>
-                <button onclick="if(confirm('حذف؟')) remove(ref(db, 'menu/${key}'))" class="p-4 bg-red-50 text-red-600 rounded-2xl">حذف نهائي</button>
+            <h2 class="font-bold mb-6 text-center text-lg">${item.name}</h2>
+            <div class="grid grid-cols-1 gap-3">
+                <button onclick="discountUI('${key}')" class="p-4 bg-orange-50 text-orange-600 rounded-2xl font-bold">تعديل الخصم</button>
+                <button onclick="removeDiscount('${key}')" class="p-4 border rounded-2xl text-gray-500">إزالة الخصم</button>
+                <button onclick="deleteItem('${key}')" class="p-4 bg-red-50 text-red-600 rounded-2xl font-bold">حذف الوجبة نهائياً</button>
             </div>
         `);
     };
 
+    window.removeDiscount = (key) => {
+        update(ref(db, `menu/${key}`), { discount: 0, expiry: 0 }).then(closeModal);
+    };
+
+    window.deleteItem = (key) => {
+        if(confirm('هل أنت متأكد من حذف هذا الصنف تماماً؟')) {
+            remove(ref(db, `menu/${key}`)).then(closeModal);
+        }
+    };
+
     window.discountUI = (key) => {
         showModal(`
-            <h2 class="font-bold mb-4">ضبط الخصم</h2>
-            <input id="perc" type="number" placeholder="نسبة الخصم (مثلاً 20)" class="w-full p-4 bg-gray-50 rounded-2xl mb-2">
-            <select id="dur" class="w-full p-4 bg-gray-50 rounded-2xl mb-4">
+            <h2 class="font-bold mb-4">ضبط الخصم %</h2>
+            <input id="perc" type="number" placeholder="نسبة الخصم (مثلاً 20)" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 outline-none">
+            <select id="dur" class="w-full p-4 bg-gray-50 rounded-2xl mb-6">
                 <option value="1">ساعة واحدة</option>
                 <option value="24">يوم كامل</option>
                 <option value="8760">دائم</option>
             </select>
-            <button id="dBtn" class="w-full bg-red-600 text-white p-4 rounded-2xl font-bold">تأكيد الخصم</button>
+            <button onclick="confirmDiscount('${key}')" class="w-full btn-grad p-4 rounded-2xl font-bold">تفعيل</button>
         `);
-        document.getElementById('dBtn').onclick = () => {
-            const expiry = Date.now() + (Number(document.getElementById('dur').value) * 3600000);
-            update(ref(db, `menu/${key}`), { discount: Number(document.getElementById('perc').value), expiry }).then(closeModal);
-        };
+    };
+
+    window.confirmDiscount = (key) => {
+        const p = document.getElementById('perc').value;
+        const d = document.getElementById('dur').value;
+        const expiry = Date.now() + (Number(d) * 3600000);
+        update(ref(db, `menu/${key}`), { discount: Number(p), expiry }).then(closeModal);
     };
 
     window.showOrders = () => {
         get(ref(db, 'orders')).then(snap => {
             const data = snap.val();
             let html = data ? Object.entries(data).reverse().map(([k, v]) => `
-                <div class="p-4 border-b text-xs mb-2">
-                    <div class="flex justify-between font-black mb-1"><span>طاولة ${v.table}</span> <span class="text-orange-600">${v.status}</span></div>
-                    <div class="text-gray-500 mb-2">${v.items}</div>
-                    <div class="flex gap-2 font-bold">
-                        <button onclick="updateOrder('${k}', '✅ اكتمل')" class="text-green-600 border border-green-600 px-3 py-1 rounded-lg">اكتمل</button>
-                        <button onclick="remove(ref(db, 'orders/${k}')).then(showOrders)" class="text-red-400 border border-red-400 px-3 py-1 rounded-lg">حذف</button>
+                <div class="p-5 border-b border-gray-100 bg-gray-50 dark:bg-slate-800 rounded-2xl mb-3">
+                    <div class="flex justify-between font-black mb-2">
+                        <span class="text-lg">طاولة ${v.table}</span> 
+                        <span class="${v.status.includes('⏳')?'text-orange-500':'text-green-500'}">${v.status}</span>
+                    </div>
+                    <div class="text-sm opacity-70 mb-4">${v.items}</div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="updateStatus('${k}', '✅ مكتمل')" class="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold">اكتمل</button>
+                        <button onclick="updateStatus('${k}', '❌ مرفوض')" class="bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold">أرفض</button>
+                        <button onclick="deleteOrder('${k}')" class="bg-gray-200 text-black px-4 py-2 rounded-xl text-xs font-bold">احذف</button>
                     </div>
                 </div>
-            `).join('') : 'لا توجد طلبات حالية';
-            showModal(`<h2 class="font-black mb-4">قائمة الطلبات</h2><div class="max-h-96 overflow-y-auto">${html}</div>`);
+            `).join('') : '<p class="text-center opacity-40">لا توجد طلبات</p>';
+            showModal(`<h2 class="font-black mb-6 text-xl">الطلبات الواردة</h2><div class="max-h-[70vh] overflow-y-auto">${html}</div>`);
         });
     };
 
-    window.updateOrder = (k, s) => update(ref(db, `orders/${k}`), {status: s}).then(showOrders);
+    window.updateStatus = (k, s) => update(ref(db, `orders/${k}`), {status: s}).then(showOrders);
+    
+    window.deleteOrder = (k) => {
+        if(confirm('حذف الطلب من القائمة؟')) {
+            remove(ref(db, `orders/${k}`)).then(showOrders);
+        }
+    };
 
+    // Rating & Viewing
     window.viewItem = (key) => {
         const item = menu.find(i => i.fKey === key);
+        const avg = (item.ratingSum / (item.ratingCount || 1)).toFixed(1);
         showModal(`
-            <img src="${item.imageUrl}" class="w-full h-56 object-cover rounded-[2rem] mb-6 shadow-xl">
-            <h2 class="text-2xl font-black mb-2">${item.name}</h2>
-            <div class="flex items-center gap-2 mb-6">
-                <span class="text-orange-500 text-lg">⭐ ${(item.ratingSum/(item.ratingCount||1)).toFixed(1)}</span>
-                <span class="text-gray-400 text-xs">(${item.ratingCount || 0} تقييم)</span>
+            <img src="${item.imageUrl}" class="w-full h-64 object-cover rounded-[2.5rem] mb-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-black">${item.name}</h2>
+                <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-bold">⭐ ${avg}</div>
             </div>
-            <p class="text-gray-400 text-sm mb-6">ما هو تقييمك لهذه الوجبة؟</p>
-            <div class="flex justify-center gap-3">
-                ${[1,2,3,4,5].map(n => `<button onclick="rateItem('${key}', ${n})" class="text-4xl hover:scale-125 transition-transform">⭐</button>`).join('')}
+            <p class="text-gray-400 text-sm mb-8 text-center italic">ما رأيك في مذاق هذا الصنف؟ تقييمك يساعدنا على التحسن.</p>
+            <div class="star-rating flex justify-center gap-4 mb-4">
+                ${[1,2,3,4,5].map(n => `<span onclick="rateItem('${key}', ${n})" class="star ${n <= Math.round(avg) ? 'star-active' : ''}">★</span>`).join('')}
             </div>
+            <p class="text-center text-[10px] text-gray-300">إجمالي التقييمات: ${item.ratingCount || 0}</p>
         `);
     };
 
@@ -292,13 +463,43 @@
         update(ref(db, `menu/${key}`), {
             ratingSum: (item.ratingSum || 0) + stars,
             ratingCount: (item.ratingCount || 0) + 1
-        }).then(() => { alert("شكراً لتقييمك!"); closeModal(); });
+        }).then(() => {
+            alert("شكراً لمشاركتنا رأيك!");
+            closeModal();
+        });
+    };
+
+    // Theme Creation
+    window.addNewTheme = () => {
+        const name = document.getElementById('newThemeName').value;
+        const c1 = document.getElementById('color1').value;
+        const c2 = document.getElementById('color2').value;
+        if(!name) return alert("ادخل اسم الثيم");
+        
+        const newTheme = {
+            id: 'custom_' + Date.now(),
+            name: name,
+            class: 'custom-theme-' + Date.now(),
+            preview: c1,
+            css: `background: linear-gradient(135deg, ${c1}, ${c2}); --bg-body: ${c1}; --card-bg: rgba(255,255,255,0.1); --text-main: #fff;`
+        };
+
+        // Inject dynamic style
+        const style = document.createElement('style');
+        style.innerHTML = `.${newTheme.class} { ${newTheme.css} }`;
+        document.head.appendChild(style);
+
+        push(ref(db, 'settings/themes'), newTheme).then(() => {
+            alert("تم إضافة الثيم بنجاح");
+        });
     };
 
     // UI Helpers
-    window.showModal = (content) => { document.getElementById('modalBody').innerHTML = content; document.getElementById('modal').classList.remove('hidden'); };
+    window.showModal = (content) => { 
+        document.getElementById('modalBody').innerHTML = content; 
+        document.getElementById('modal').classList.remove('hidden'); 
+    };
     window.closeModal = () => document.getElementById('modal').classList.add('hidden');
 </script>
 </body>
-</html>
-
+    </html>
